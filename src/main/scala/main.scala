@@ -1,9 +1,16 @@
 package com.scalaStocks.Main
 
 import scala.io.Source
-import sttp.client3._
+import sttp.client3.*
+
 import scala.util.matching.Regex
-import java.io._
+import java.io.*
+import java.time.Duration
+import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Await
+import scala.util.{Failure, Success}
 
 object Main:
   def main(args: Array[String]): Unit =
@@ -15,16 +22,23 @@ object Main:
       println("Nothing found in in.csv")
 
     val sb: StringBuilder = new StringBuilder()
-    stocks.foreach(stock => {
-      val price = getPrice(stock)
-      val line = s"$stock,$price"
 
-      println(line)
-      sb ++= line
-      sb ++= "\n"
-    })
+    val futurePrices = Future.sequence(stocks.map(stock => getPriceF(stock)))
 
-    writeFile(sb.toString())
+    val oneMin = scala.concurrent.duration.Duration(60, "seconds")
+    Await.ready(futurePrices, oneMin)
+
+    futurePrices.map { prices =>
+      prices.foreach(price =>
+        println(price)
+        sb ++= price
+        sb ++= "\n"
+      )
+
+      writeFile(sb.toString())
+    }
+
+    Thread.sleep(1000) // give time to write to file
 
     println("All of your stocks and prices have been written to out.csv")
     println("I hope it's a fortune, Clark.")
@@ -41,21 +55,22 @@ object Main:
     pw.write(data)
     pw.close()
 
-  def getPrice(stock: String): String =
+  def getPriceF(stock: String): Future[String] =
     println(s"Getting Price for: $stock")
     val url = s"https://finance.yahoo.com/quote/$stock?p=$stock"
 
     val request = basicRequest.get(uri"https://finance.yahoo.com/quote/$stock?p=$stock")
 
-    val backend = HttpClientSyncBackend()
-    val response = request.send(backend)
+    val backend = HttpClientFutureBackend()
+    val responseF = request.send(backend)
 
-    val pat: Regex = """data-pricehint="2" value="\d+.\d+""".r
-
-    val matchOpt = pat.findFirstMatchIn(response.body.getOrElse(""))
-
-    matchOpt match
-      case Some(value) =>
-        value.group(0).split("value=\"").last
-      case _ => "no price found (yahoo html might have changed)"
-
+    responseF map { resp =>
+      val pat: Regex = """data-pricehint="2" value="\d+.\d+""".r
+      val matchOpt = pat.findFirstMatchIn(resp.body.getOrElse(""))
+      matchOpt match
+        case Some(value) =>
+          value.group(0).split("value=\"").last
+        case _ => "no price found (yahoo html might have changed)"
+    } map { price =>
+      s"$stock,$price"
+    }
