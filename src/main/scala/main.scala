@@ -65,8 +65,8 @@ object Main:
     val responseF = request.send(backend)
 
     responseF map { resp =>
-      val pat: Regex = """data-pricehint="2" value="\d+.\d+""".r
-      val matchOpt = pat.findFirstMatchIn(resp.body.getOrElse(""))
+      val pat: Regex = """regularMarketPrice"\s+data-trend="none"\s+data-pricehint="2" value="\d+\.*\d*""".r
+      val matchOpt = pat.findFirstMatchIn(resp.body.getOrElse("").replace('\n', ' '))
       matchOpt match
         case Some(value) =>
           value.group(0).split("value=\"").last
