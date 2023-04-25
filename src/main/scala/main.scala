@@ -60,7 +60,6 @@ object Main:
 
   def getPriceF(stock: String): Future[String] =
     println(s"Getting Price for: $stock")
-    val url = s"https://finance.yahoo.com/quote/$stock?p=$stock"
 
     val request = basicRequest.get(uri"https://finance.yahoo.com/quote/$stock?p=$stock")
 
