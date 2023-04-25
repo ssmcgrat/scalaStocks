@@ -17,3 +17,6 @@ Copy contents of `out/artifacts/scalaStocks_jar` to a convenient location on you
 Edit `in.csv`, adding one stock symbol per line
 
 Double-click `run.bat`. Command window will open and you'll see the app running. Once done, results will be saved to a new file, `out.csv`.
+
+If you start seeing output for one or more stocks that "no price was found", we likely need to update the regex pattern which scrapes the stock price from
+the raw HTML. Copy the text within `out/artifacts/scalaStocks_jar/regex.conf` into your local regex.conf file and try again.
