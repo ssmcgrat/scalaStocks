@@ -23,22 +23,19 @@ object Main:
 
     val sb: StringBuilder = new StringBuilder()
 
-    val futurePrices = Future.sequence(stocks.map(stock => getPriceF(stock)))
-
-    val oneMin = scala.concurrent.duration.Duration(60, "seconds")
-    Await.ready(futurePrices, oneMin)
-
-    futurePrices.map { prices =>
-      prices.foreach(price =>
+    val futureComplete = for {
+      prices <- Future.sequence(stocks.map(stock => getPriceF(stock)))
+      sb = new StringBuilder()
+      _ = prices.foreach(price =>
         println(price)
         sb ++= price
         sb ++= "\n"
       )
+      written = writeFile(sb.toString())
+    } yield written
 
-      writeFile(sb.toString())
-    }
-
-    Thread.sleep(1000) // give time to write to file
+    val oneMin = scala.concurrent.duration.Duration(60, "seconds")
+    Await.ready(futureComplete, oneMin)
 
     println("All of your stocks and prices have been written to out.csv")
     println("I hope it's a fortune, Clark.")
@@ -49,6 +46,12 @@ object Main:
     val stocks = bufferedSource.getLines.map(_.trim().toUpperCase()).toList
     bufferedSource.close
     stocks
+
+  def readRegexPattern(): String =
+    val bufferedSource = Source.fromFile("regex.conf")
+    val result = bufferedSource.getLines().map(_.trim()).toSeq.head
+    bufferedSource.close
+    result
 
   def writeFile(data: String): Unit =
     val pw = new PrintWriter(new File("out.csv"))
@@ -65,7 +68,7 @@ object Main:
     val responseF = request.send(backend)
 
     responseF map { resp =>
-      val pat: Regex = """regularMarketPrice"\s+data-trend="none"\s+data-pricehint="[0-9]" value="\d+\.*\d*""".r
+      val pat: Regex = new Regex(readRegexPattern())
       val matchOpt = pat.findFirstMatchIn(resp.body.getOrElse("").replace('\n', ' '))
       matchOpt match
         case Some(value) =>
