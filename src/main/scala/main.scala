@@ -61,7 +61,8 @@ object Main:
   def getPriceF(stock: String): Future[String] =
     println(s"Getting Price for: $stock")
 
-    val request = basicRequest.get(uri"https://finance.yahoo.com/quote/$stock?p=$stock")
+    val request = basicRequest.get(uri"https://finance.yahoo.com/quote/$stock")
+      .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36")
 
     val backend = HttpClientFutureBackend()
     val responseF = request.send(backend)
