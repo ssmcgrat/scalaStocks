@@ -1,12 +1,10 @@
 package com.scalaStocks.Main
 
-import sttp.client3.{HttpClientFutureBackend, UriContext, basicRequest}
-
 import scala.concurrent.Future
 import scala.io.Source
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import ujson._
+import sttp.client3.{HttpClientFutureBackend, UriContext, basicRequest}
 
 class IexClient {
 

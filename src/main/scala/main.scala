@@ -3,7 +3,6 @@ package com.scalaStocks.Main
 import scala.io.Source
 import sttp.client3.*
 
-import scala.util.matching.Regex
 import java.io.*
 import java.time.Duration
 import scala.concurrent.Future
@@ -16,6 +15,8 @@ object Main:
   def main(args: Array[String]): Unit =
     println("Only thing better than watching Greyhound?... BUYING STOCKS MAAAAAN!")
 
+    val quotesPerSecond = 5 // our iex free subscription allows 5 req/second
+
     val stocks = readFile()
 
     if (stocks.length == 0)
@@ -24,13 +25,15 @@ object Main:
     val sb: StringBuilder = new StringBuilder()
     val iexClient = new IexClient()
 
-    val batches = stocks.grouped(5)
+    val batches = stocks.grouped(quotesPerSecond)
+
+    println(s"Fetching stock prices in batches of 5. Please allow ${stocks.grouped(quotesPerSecond).length} seconds...")
 
     var shouldSleep = false
 
     batches.foreach(batch => {
       if (shouldSleep) {
-        Thread.sleep(1001)
+        Thread.sleep(1000) // sleep one sec to accommodate our free api subscription.
       }
 
       shouldSleep = true
@@ -43,14 +46,13 @@ object Main:
           sb ++= price
           sb ++= "\n"
         )
-//        written = writeFile(sb.toString())
       } yield ()
 
       val oneMin = scala.concurrent.duration.Duration(60, "seconds")
       Await.ready(allBatchF, oneMin)
     })
     writeFile(sb.toString())
-    Thread.sleep(500)
+    Thread.sleep(500) // just to ensure the file io completes.
 
     println("All of your stocks and prices have been written to out.csv")
     println("I hope it's a fortune, Clark.")
