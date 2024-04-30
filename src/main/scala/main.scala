@@ -9,6 +9,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Await
+import scala.sys.exit
 import scala.util.{Failure, Success}
 
 object Main:
@@ -17,13 +18,21 @@ object Main:
 
     val quotesPerSecond = 5 // our iex free subscription allows 5 req/second
 
-    val stocks = readFile()
+    val stocks = readFile("in.csv")
 
     if (stocks.length == 0)
       println("Nothing found in in.csv")
 
     val sb: StringBuilder = new StringBuilder()
-    val iexClient = new IexClient()
+
+    val token = readFile("tokenConfig.txt")
+
+    if (token.isEmpty || token.head.isEmpty) {
+      println("No api token found in config file, contact Sean for help man.")
+      exit()
+    }
+
+    val iexClient = new IexClient(token.head.trim.toLowerCase)
 
     val batches = stocks.grouped(quotesPerSecond)
 
@@ -57,8 +66,8 @@ object Main:
     println("All of your stocks and prices have been written to out.csv")
     println("I hope it's a fortune, Clark.")
 
-  def readFile(): List[String] =
-    val bufferedSource = Source.fromFile("in.csv")
+  def readFile(filename: String): List[String] =
+    val bufferedSource = Source.fromFile(filename)
 
     val stocks = bufferedSource.getLines.map(_.trim().toUpperCase()).toList
     bufferedSource.close

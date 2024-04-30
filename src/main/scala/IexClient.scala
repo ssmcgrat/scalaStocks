@@ -6,12 +6,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import sttp.client3.{HttpClientFutureBackend, UriContext, basicRequest}
 
-class IexClient {
-
-  val token = "pk_1f5c527a76a94ab28866ea4454a7dd87"
-
+class IexClient(token: String) {
   def getQuote(quote: String): Future[String] = {
-    val request = basicRequest.get(uri"https://api.iex.cloud/v1/data/CORE/QUOTE/$quote?token=$token")
+    val uriStr = uri"https://api.iex.cloud/v1/data/CORE/QUOTE/$quote?token=$token"
+    val request = basicRequest.get(uriStr)
 
     val backend = HttpClientFutureBackend()
     val responseF = request.send(backend)
