@@ -8,3 +8,5 @@ lazy val root = (project in file("."))
   )
 
 libraryDependencies += "com.softwaremill.sttp.client3" %% "core" % "3.8.5"
+
+libraryDependencies += "com.lihaoyi" %% "upickle" % "3.1.0"
