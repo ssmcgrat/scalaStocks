@@ -4,7 +4,8 @@ import scala.io.Source
 import sttp.client3.*
 
 import java.io.*
-import java.time.Duration
+import java.time._
+import java.util.Date
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
