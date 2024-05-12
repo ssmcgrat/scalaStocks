@@ -17,7 +17,7 @@ object Main:
   def main(args: Array[String]): Unit =
     println("Only thing better than watching Greyhound?... BUYING STOCKS MAAAAAN!")
 
-    val quotesPerSecond = 5 // our iex free subscription allows 5 req/second
+    val quotesPerSecond = 50 // send up to 50 requests in parallel
 
     val stocks = readFile("in.csv")
 
@@ -37,7 +37,7 @@ object Main:
 
     val batches = stocks.grouped(quotesPerSecond)
 
-    println(s"Fetching stock prices in batches of 5. Please allow ${stocks.grouped(quotesPerSecond).length} seconds...")
+    println(s"Fetching stock prices in batches of $quotesPerSecond. Please allow ${stocks.grouped(quotesPerSecond).length} seconds...")
 
     var shouldSleep = false
 
