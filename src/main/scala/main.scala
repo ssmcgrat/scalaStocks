@@ -26,14 +26,14 @@ object Main:
 
     val sb: StringBuilder = new StringBuilder()
 
-    val token = readFile("tokenConfig.txt")
+    val token = readFile("tokenConfig.txt", false)
 
     if (token.isEmpty || token.head.isEmpty) {
       println("No api token found in config file, contact Sean for help man.")
       exit()
     }
 
-    val iexClient = new IexClient(token.head.trim.toLowerCase)
+    val quoteClient = new FMPClient(token.head.trim)
 
     val batches = stocks.grouped(quotesPerSecond)
 
@@ -50,7 +50,7 @@ object Main:
       println("Getting prices for: " + batch)
 
       val allBatchF = for {
-        prices <- Future.sequence(batch.map(stock => iexClient.getQuote(stock)))
+        prices <- Future.sequence(batch.map(stock => quoteClient.getQuote(stock)))
         _ = prices.foreach(price =>
           println(price)
           sb ++= price
@@ -61,16 +61,23 @@ object Main:
       val oneMin = scala.concurrent.duration.Duration(60, "seconds")
       Await.ready(allBatchF, oneMin)
     })
+    println(sb.toString())
     writeFile(sb.toString())
     Thread.sleep(500) // just to ensure the file io completes.
 
     println("All of your stocks and prices have been written to out.csv")
     println("I hope it's a fortune, Clark.")
 
-  def readFile(filename: String): List[String] =
+  def readFile(filename: String, toUpper: Boolean = true): List[String] =
     val bufferedSource = Source.fromFile(filename)
 
-    val stocks = bufferedSource.getLines.map(_.trim().toUpperCase()).toList
+    val stocks = bufferedSource.getLines.map(line => {
+      if (toUpper) {
+        line.trim().toUpperCase()
+      } else {
+        line.trim
+      }
+    }).toList
     bufferedSource.close
     stocks
 
