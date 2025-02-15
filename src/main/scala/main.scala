@@ -41,6 +41,8 @@ object Main:
 
     var shouldSleep = false
 
+    var allPrices: List[String] = List()
+
     batches.foreach(batch => {
       if (shouldSleep) {
         Thread.sleep(1000) // sleep one sec to accommodate our free api subscription.
@@ -49,18 +51,21 @@ object Main:
       shouldSleep = true
       println("Getting prices for: " + batch)
 
-      val allBatchF = for {
+      val allPricesInBatchF = for {
         prices <- Future.sequence(batch.map(stock => quoteClient.getQuote(stock)))
-        _ = prices.foreach(price =>
-          println(price)
-          sb ++= price
-          sb ++= "\n"
-        )
-      } yield ()
+      } yield (prices)
 
       val oneMin = scala.concurrent.duration.Duration(60, "seconds")
-      Await.ready(allBatchF, oneMin)
+      val allPricesInBatch = Await.result(allPricesInBatchF, oneMin)
+
+      allPrices ++= allPricesInBatch
     })
+
+    allPrices.foreach(price => {
+      sb ++= price
+      sb ++= "\n"
+    })
+
     println(sb.toString())
     writeFile(sb.toString())
     Thread.sleep(500) // just to ensure the file io completes.

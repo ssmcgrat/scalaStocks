@@ -48,14 +48,13 @@ class FMPClient(token: String) {
 
     responseF map { resp =>
       val json: ujson.Value = ujson.read(resp.body.getOrElse(""))
-
-      // parse the first index of json array, attribute "foo"
-      val stock = json(0)
-
-      println(stock)
-      val price = stock("price").toString
-
-      price
+      try {
+        val stock = json(0)
+        val price = stock("price").toString
+        price
+      } catch {
+        case exception: Exception => s"price not found"
+      }
     } map { price =>
       s"$quote,$price"
     }
