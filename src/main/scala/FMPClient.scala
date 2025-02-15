@@ -1,11 +1,11 @@
 package com.scalaStocks.Main
 
-import java.time._
+import java.time.*
 import scala.concurrent.Future
 import scala.io.Source
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import sttp.client3.{HttpClientFutureBackend, UriContext, basicRequest}
+import sttp.model.StatusCode
 
 class FMPClient(token: String) {
   // https://site.financialmodelingprep.com/developer/docs
@@ -47,13 +47,18 @@ class FMPClient(token: String) {
     val responseF = request.send(backend)
 
     responseF map { resp =>
-      val json: ujson.Value = ujson.read(resp.body.getOrElse(""))
-      try {
-        val stock = json(0)
-        val price = stock("price").toString
-        price
-      } catch {
-        case exception: Exception => s"price not found"
+      resp.code match {
+        case StatusCode.Ok => {
+          val json: ujson.Value = ujson.read(resp.body.getOrElse(""))
+          try {
+            val stock = json(0)
+            val price = stock("price").toString
+            price
+          } catch {
+            case exception: Exception => s"price not found"
+          }
+        }
+        case _ => s"GET price failed with http status code: ${resp.code.code}"
       }
     } map { price =>
       s"$quote,$price"
